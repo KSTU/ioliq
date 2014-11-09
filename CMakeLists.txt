@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 2.8)
+project(ioliq)
+set(ioliq_version)
+message("${CMAKE_SYSTEM_PROCESSOR}")
+if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_C_FLAG " ${CMAKE_C_FLAG}-lm")
+	message("flags = ${CMAKE_C_FLAG}")
+endif(CMAKE_COMPILER_IS_GNUCC)
+add_executable(cellgen cellgen.c)
+target_link_libraries(cellgen -lm)
+
