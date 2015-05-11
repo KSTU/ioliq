@@ -30,8 +30,14 @@ typedef struct systemcell{
 	float **x;
 	float **y;
 	float **z;
-	
 }systemcell;
+
+typedef struct tempcoord{
+	float x;
+	float y;
+	float z;
+	int av;	//available
+}tempcoord;
 
 int readinitial(const char* grofile,struct molecula *in);
 int writegro (const char* grofile,const struct molecula *smol,const struct systemcell sce,const float a, const float b, const float c);
@@ -39,7 +45,9 @@ int writegro (const char* grofile,const struct molecula *smol,const struct syste
 int main(int argc, char *argv[]){
 	struct molecula moltype[MAXMOL];
 	struct systemcell ce;
+	struct tempcoord *TempP;
 	int i,j,k,l;
+	int ii,jj,kk,ll;
 	float dens;
 	int nmol;
 	int Lcell;
@@ -49,19 +57,29 @@ int main(int argc, char *argv[]){
 	float dlcell;
 	int id;
 	int tempint;
-	float rbez;
+	float MemDelta,MemLat;
+	
+	int NMem,NMol;
+	int NSub;
+	int Nset;
+	int testm;
+	int *XMol;
+	int Inserted;
+	
+	srand (time(NULL));
 	
 	if(argc<3){
-		printf("usege: density filename.gro \n");
+		printf("usege: density filename.gro \n"); //print help
 		return 0;
 	}
-	dens=strtof(argv[1],NULL);
+	if(strcmp(argv[1],"il-ph")==0){
+	dens=strtof(argv[2],NULL);
 	if(dens>0.0){
 		printf("number density %f \n",dens);
 	}
-	
-	if(strcmp(argv[2],"il-ph")==0){
-	
+	else{
+		printf("%s error: number density <0 \n %s",KRED,KNRM);
+	}
 	for(i=0;i<argc-3;i++){	//read initial atom configuration
 		moltype[i].x=(float*)malloc(MAXATOM*sizeof(float));
 		moltype[i].y=(float*)malloc(MAXATOM*sizeof(float));
@@ -79,44 +97,36 @@ int main(int argc, char *argv[]){
 		}
 		printf("%s generation for ionic liquid phase equilibrium %s \n",KBLU,KNRM);
 		Lcell=3;
-		rbez=0.3;
-		dens=dens/rbez/rbez/rbez;
-		nmol=(int)1000.0/dens;
-		Hcell=(int)pow(nmol,1.0/3.0)+1; //printf(" %f \n",pow(nmol,2));
+		dens=dens/SIGMA/SIGMA/SIGMA;
+		nmol=(int)1000.0/dens*40.0;
+		Hcell=(int)pow(nmol,1.0/3.0)+2;	//printf(" %f \n",pow(nmol,2));
 		printf("%i %i \n",nmol,Hcell);
 		nmol=Hcell*Hcell*Hcell;
 		Vcell=nmol/dens;
 		dlcell=pow(Vcell,1.0/3.0)/Hcell;
 		ce.atype=(int*)malloc(nmol*Lcell*MAXATOM*sizeof(int));
 		ce.x=(float**)malloc(nmol*Lcell*sizeof(float*));
-		for(i=0;i<nmol*Lcell;i++){
-			ce.x[i]=(float*)malloc(MAXATOM*sizeof(float*));
-		}
 		ce.y=(float**)malloc(nmol*Lcell*sizeof(float*));
-		for(i=0;i<nmol*Lcell;i++){
-			ce.y[i]=(float*)malloc(MAXATOM*sizeof(float));
-		}
 		ce.z=(float**)malloc(nmol*Lcell*sizeof(float*));
 		for(i=0;i<nmol*Lcell;i++){
+			ce.x[i]=(float*)malloc(MAXATOM*sizeof(float));
+			ce.y[i]=(float*)malloc(MAXATOM*sizeof(float));
 			ce.z[i]=(float*)malloc(MAXATOM*sizeof(float));
 		}
 		id=0;
-		for(i=0;i<Hcell*Lcell;i++){ //z
-			for(j=0;j<Hcell;j++){	//x
-				for(k=0;k<Hcell;k++){	//y
+		for(ii=0;ii<Hcell*Lcell;ii++){		//z
+			for(jj=0;jj<Hcell;jj++){		//x
+				for(kk=0;kk<Hcell;kk++){	//y
 					if((id+1)%2==0){
 						ce.atype[id]=0;
 					}
 					else{
 						ce.atype[id]=1;
 					}
-					//
-					//printf("%i %i \n",id,moltype[ce.atype[id]].anum);
-					for(l=0;l<moltype[ce.atype[id]].anum;l++){
-						ce.x[id][l]=moltype[ce.atype[id]].x[l]+(j+0.5)*dlcell;
-						ce.y[id][l]=moltype[ce.atype[id]].y[l]+(k+0.5)*dlcell;
-						ce.z[id][l]=moltype[ce.atype[id]].z[l]+(i+0.5)*dlcell;
-						//printf("name %s %d l %d x %f y %f z %f \n",moltype[ce.atype[id]].name[l], ce.atype[id],l,ce.x[id][l],ce.y[id][l],ce.z[id][l]);
+					for(ll=0;ll<moltype[ce.atype[id]].anum;ll++){
+						ce.x[id][ll]=moltype[ce.atype[id]].x[ll]+(j+0.5)*dlcell;
+						ce.y[id][ll]=moltype[ce.atype[id]].y[ll]+(k+0.5)*dlcell;
+						ce.z[id][ll]=moltype[ce.atype[id]].z[ll]+(i+0.5)*dlcell;
 					}
 					id++;
 				}
@@ -134,8 +144,118 @@ int main(int argc, char *argv[]){
 		//
 		return 0;
 	}
-	else if (strcmp(argv[2],"il")==0){
+	else if (strcmp(argv[1],"il")==0){
 		printf("%s generation for ionic liquid cube cell %s \n",KBLU,KNRM);
+		return 0;
+	}
+	else if(strcmp(argv[1],"mem-dif")==0){
+		if(argc<5){
+			printf("%s error usege: cellgen mem-dif Deltamem MemLat dens file.gro %% %s \n",KRED,KNRM);
+		}
+		printf("%s generation of membranes for diffusion %s \n",KBLU,KNRM);
+		//calculate voloume of cell
+		MemDelta=strtof(argv[2],NULL);
+		MemDelta=MemDelta*SIGMA;	//set the dimensionless form
+		MemLat=strtol(argv[3],NULL,10);
+		dens=strtof(argv[4],NULL);
+		dlcell=MemDelta*MemLat;
+		Vcell=pow(MemDelta*MemLat,3);
+		NMem=MemLat*MemLat*MemLat;	//number of membrane molecules
+		NMol=Vcell*dens/(SIGMA*SIGMA*SIGMA);	//number of molecules
+		printf("%f \n", Vcell);
+		//numbers of substances
+		NSub=(int)(argc-4)/2;
+		printf("NSub %d NMol %d \n",NSub,NMol);
+		//set coordintes
+		Nset=(int)pow(NMol,1.0/3.0)+1;
+		TempP=(tempcoord*)malloc(NMol*sizeof(tempcoord));
+		id=0;
+		for(ii=0;ii<Nset;ii++){	//set initial coordintes of atoms
+			for(jj=0;jj<Nset;jj++){
+				for(kk=0;kk<Nset;kk++){
+					//
+					if(id<NMol){
+						TempP[id].x=ii*dlcell/Nset;
+						TempP[id].y=jj*dlcell/Nset;
+						TempP[id].z=kk*dlcell/Nset;
+						TempP[id].av=0;
+						id++;
+					}
+				}
+			}
+		}
+		XMol=(int*)malloc(NSub*sizeof(int));
+		//allocate atoms
+		nmol=NMem+NMol;	//molecules with membrane
+		ce.atype=(int*)malloc(nmol*MAXATOM*sizeof(int));
+		ce.x=(float**)malloc(nmol*sizeof(float*));
+		ce.y=(float**)malloc(nmol*sizeof(float*));
+		ce.z=(float**)malloc(nmol*sizeof(float*));
+		for(i=0;i<nmol;i++){
+			ce.x[i]=(float*)malloc(MAXATOM*sizeof(float));
+			ce.y[i]=(float*)malloc(MAXATOM*sizeof(float));
+			ce.z[i]=(float*)malloc(MAXATOM*sizeof(float));
+		}
+		printf("test \n");
+		//
+		id=0;	//number of inserted molecule
+		for(i=0;i<NSub;i++){
+			//read initial
+			moltype[i].x=(float*)malloc(MAXATOM*sizeof(float));
+			moltype[i].y=(float*)malloc(MAXATOM*sizeof(float));
+			moltype[i].z=(float*)malloc(MAXATOM*sizeof(float));
+			moltype[i].vx=(float*)malloc(MAXATOM*sizeof(float));
+			moltype[i].vy=(float*)malloc(MAXATOM*sizeof(float));
+			moltype[i].vz=(float*)malloc(MAXATOM*sizeof(float));
+			moltype[i].name=(char**)malloc(MAXATOM*sizeof(char*));
+			moltype[i].atom=(char**)malloc(MAXATOM*sizeof(char*));
+			for(j=0;j<MAXATOM;j++){
+				moltype[i].name[j]=(char*)malloc(MAXSTR*sizeof(char));
+				moltype[i].atom[j]=(char*)malloc(MAXSTR*sizeof(char));
+			}
+			tempint=readinitial(argv[i*2+5],&moltype[i]);	//read gro file
+			XMol[i]=strtof(argv[i*2+6],NULL);
+			//printf("XMol %d \n",XMol[i]);
+			//
+			XMol[i]=XMol[i]*NMol/100;
+			Inserted=0;
+			while(Inserted<XMol[i]){
+				testm=rand()%NMol;
+				//printf("%d \n",testm);
+				if(TempP[testm].av==0){
+					//insert molecules
+					TempP[testm].av==1;
+					ce.atype[id]=i;
+					for(ii=0;ii<moltype[i].anum;ii++){
+						ce.x[id][ii]=moltype[i].x[ii]+TempP[testm].x;
+						ce.y[id][ii]=moltype[i].y[ii]+TempP[testm].y;
+						ce.z[id][ii]=moltype[i].z[ii]+TempP[testm].z;
+					}
+					id++;
+					Inserted++;
+					//printf("inser %d XMol %d \n",Inserted,XMol[i]);
+				}
+			//printf("id %d %d\n",id,i);
+			}
+			
+		}
+		printf("end\n");
+		//insert membrane atoms
+		//Membrane moleculas
+		moltype[NSub].x[0]=0.0;
+		moltype[NSub].y[0]=0.0;
+		moltype[NSub].z[0]=0.0;
+		//
+		for(i=0;i<NMem;i++){
+		
+		}
+		//
+		ce.mnum=NMol+NMem;
+		free(ce.atype);
+		free(ce.x);
+		free(ce.y);
+		free(ce.z);
+		printf("test\n");
 		return 0;
 	}
 	else {
@@ -150,16 +270,16 @@ int readinitial(const char* grofile,struct molecula *in){
 	int arr;
 	int tempint;
 	int i;
+	char temps[30];
 	//
 	infile=fopen(grofile,"r");
 	if (infile==0){
 		printf("%s  %s file open error %s \n", grofile,KRED,KNRM);
 		return 1;
 	}
+	fscanf(infile,"%s",temps);
 	fscanf(infile,"%d",&in->anum);
-	//in.anum=3; //&tempint;
 	printf(" %d atoms in %s \n",in->anum,grofile);
-	//
 	for(i=0;i<in->anum;i++){
 		fscanf(infile,"%5d%5s%5s%5d%f%f%f%f%f%f",
 		&tempint,in->name[i],in->atom[i],&tempint,&in->x[i],&in->y[i],&in->z[i],&in->vx[i],&in->vy[i],&in->vz[i]);
