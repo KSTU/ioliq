@@ -166,7 +166,7 @@ int main(int argc, char *argv[]){
 		printf("%f \n", Vcell);
 		//numbers of substances
 		NSub=(int)(argc-5)/2;
-		printf("NSub %d NMol %d \n",NSub,NMol);
+		printf("Number of substances %d, total molecules %d, membrane atoms %d \n",NSub,NMol,NMem);
 		//set coordintes
 		Nset=(int)pow(NMol,1.0/3.0)+1;
 		TempP=(tempcoord*)malloc(NMol*sizeof(tempcoord));
@@ -216,9 +216,10 @@ int main(int argc, char *argv[]){
 			}
 			tempint=readinitial(argv[i*2+5],&moltype[i]);	//read gro file
 			XMol[i]=strtof(argv[i*2+6],NULL);
-			//printf("XMol %d \n",XMol[i]);
+			
 			//
 			XMol[i]=XMol[i]*NMol/100;
+			printf("substance %d number of molecules %d \n",i,XMol[i]);
 			Inserted=0;
 			while(Inserted<XMol[i]){
 				testm=rand()%NMol;
