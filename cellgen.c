@@ -63,8 +63,9 @@ int main(int argc, char *argv[]){
 	int NSub;
 	int Nset;
 	int testm;
-	int *XMol;
+	int* XMol;
 	int Inserted;
+	char* outfile;
 	
 	srand (time(NULL));
 	
@@ -161,10 +162,10 @@ int main(int argc, char *argv[]){
 		dlcell=MemDelta*MemLat;
 		Vcell=pow(MemDelta*MemLat,3);
 		NMem=MemLat*MemLat*MemLat;	//number of membrane molecules
-		NMol=Vcell*dens/(SIGMA*SIGMA*SIGMA);	//number of molecules
+		NMol=(int)Vcell*dens/(SIGMA*SIGMA*SIGMA);	//number of molecules
 		printf("%f \n", Vcell);
 		//numbers of substances
-		NSub=(int)(argc-4)/2;
+		NSub=(int)(argc-5)/2;
 		printf("NSub %d NMol %d \n",NSub,NMol);
 		//set coordintes
 		Nset=(int)pow(NMol,1.0/3.0)+1;
@@ -175,9 +176,9 @@ int main(int argc, char *argv[]){
 				for(kk=0;kk<Nset;kk++){
 					//
 					if(id<NMol){
-						TempP[id].x=ii*dlcell/Nset;
-						TempP[id].y=jj*dlcell/Nset;
-						TempP[id].z=kk*dlcell/Nset;
+						TempP[id].x=(ii+0.5)*dlcell/Nset;
+						TempP[id].y=(jj+0.5)*dlcell/Nset;
+						TempP[id].z=(kk+0.5)*dlcell/Nset;
 						TempP[id].av=0;
 						id++;
 					}
@@ -239,23 +240,56 @@ int main(int argc, char *argv[]){
 			}
 			
 		}
-		printf("end\n");
+		moltype[NSub].x=(float*)malloc(MAXATOM*sizeof(float));
+		moltype[NSub].y=(float*)malloc(MAXATOM*sizeof(float));
+		moltype[NSub].z=(float*)malloc(MAXATOM*sizeof(float));
+		moltype[NSub].vx=(float*)malloc(MAXATOM*sizeof(float));
+		moltype[NSub].vy=(float*)malloc(MAXATOM*sizeof(float));
+		moltype[NSub].vz=(float*)malloc(MAXATOM*sizeof(float));
+		moltype[NSub].name=(char**)malloc(MAXATOM*sizeof(char*));
+		moltype[NSub].atom=(char**)malloc(MAXATOM*sizeof(char*));
+		for(j=0;j<MAXATOM;j++){
+			moltype[NSub].name[j]=(char*)malloc(MAXSTR*sizeof(char));
+			moltype[NSub].atom[j]=(char*)malloc(MAXSTR*sizeof(char));
+		}
 		//insert membrane atoms
 		//Membrane moleculas
+		
+		moltype[NSub].anum=1;
 		moltype[NSub].x[0]=0.0;
 		moltype[NSub].y[0]=0.0;
 		moltype[NSub].z[0]=0.0;
-		//
-		for(i=0;i<NMem;i++){
-		
+		moltype[NSub].vx[0]=0.0;
+		moltype[NSub].vy[0]=0.0;
+		moltype[NSub].vz[0]=0.0;
+		moltype[NSub].name[0]="Mem";
+		moltype[NSub].atom[0]="Mem";
+		for(ii=0;ii<MemLat;ii++){
+			for(jj=0;jj<MemLat;jj++){
+				for(kk=0;kk<MemLat;kk++){
+					ce.atype[id]=NSub;
+					ce.x[id][0]=ii*MemDelta;
+					ce.y[id][0]=jj*MemDelta;
+					ce.z[id][0]=kk*MemDelta;
+					id++;
+				}
+			}
 		}
 		//
 		ce.mnum=NMol+NMem;
+		if(argv[argc-1]==NULL){
+			outfile="out.gro";
+		}
+		else{
+			outfile=argv[argc-1];
+		}
+		printf("%s %s DONE %s \n",KBLU,outfile,KNRM);
+		writegro(outfile,moltype,ce,dlcell,dlcell,dlcell);
+
 		free(ce.atype);
 		free(ce.x);
 		free(ce.y);
 		free(ce.z);
-		printf("test\n");
 		return 0;
 	}
 	else {
