@@ -163,22 +163,23 @@ int main(int argc, char *argv[]){
 		Vcell=pow(MemDelta*MemLat,3);
 		NMem=MemLat*MemLat*MemLat;	//number of membrane molecules
 		NMol=(int)Vcell*dens/(SIGMA*SIGMA*SIGMA);	//number of molecules
-		printf("%f \n", Vcell);
+		printf("Cell voloume: %f \n", Vcell);
 		//numbers of substances
 		NSub=(int)(argc-5)/2;
 		printf("Number of substances %d, total molecules %d, membrane atoms %d \n",NSub,NMol,NMem);
 		//set coordintes
-		Nset=(int)pow(NMol,1.0/3.0)+1;
+		Nset=(int)sqrt(NMol/MemLat)+1;	//(int)pow(NMol,1.0/3.0)+1;
+		printf("Nset %d \n", Nset);
 		TempP=(tempcoord*)malloc(NMol*sizeof(tempcoord));
 		id=0;
-		for(ii=0;ii<Nset;ii++){	//set initial coordintes of atoms
+		for(ii=0;ii<MemLat;ii++){	//set initial coordintes of atoms
 			for(jj=0;jj<Nset;jj++){
 				for(kk=0;kk<Nset;kk++){
 					//
 					if(id<NMol){
-						TempP[id].x=(ii+0.5)*dlcell/Nset;
-						TempP[id].y=(jj+0.5)*dlcell/Nset;
-						TempP[id].z=(kk+0.5)*dlcell/Nset;
+						TempP[id].x=(ii+0.5)*dlcell/MemLat;
+						TempP[id].y=(jj)*dlcell/Nset;
+						TempP[id].z=(kk)*dlcell/Nset;
 						TempP[id].av=0;
 						id++;
 					}
@@ -235,7 +236,7 @@ int main(int argc, char *argv[]){
 					}
 					id++;
 					Inserted++;
-					//printf("inser %d XMol %d \n",Inserted,XMol[i]);
+					//printf("inserted %d XMol %d \n",Inserted,XMol[i]);
 				}
 			//printf("id %d %d\n",id,i);
 			}
@@ -295,7 +296,7 @@ int main(int argc, char *argv[]){
 	}
 	else {
 		printf("Unknown type %s \n",argv[2]);
-		printf("%sGeneration type: il - ionic licuid cube, il-ph - ionic liquid %s \n",KRED,KNRM);
+		printf("%sGeneration type: il - ionic licuid cube \n il-ph - ionic liquid \n mem-dif - for membrane diffusion %s \n",KRED,KNRM);
 		return 0;
 	}
 }

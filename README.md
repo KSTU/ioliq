@@ -7,6 +7,7 @@ usage:
 
 cellgen <number density> <generation type: il -- ionic liquid> <>
 
+cellgen mem-dif <mem delta> <mem latice> <sub density> <sub file name> <sub %> [<output filename>]
 
 TODO
 =====
