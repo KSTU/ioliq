@@ -105,6 +105,7 @@ int main(int argc, char *argv[]){
 		nmol=Hcell*Hcell*Hcell;
 		Vcell=nmol/dens;
 		dlcell=pow(Vcell,1.0/3.0)/Hcell;
+		ce.mnum=NMol;
 		ce.atype=(int*)malloc(nmol*Lcell*MAXATOM*sizeof(int));
 		ce.x=(float**)malloc(nmol*Lcell*sizeof(float*));
 		ce.y=(float**)malloc(nmol*Lcell*sizeof(float*));
@@ -151,16 +152,17 @@ int main(int argc, char *argv[]){
 		dens=strtof(argv[2],NULL);
 		NMol=strtol(argv[3],NULL,10);
 		if ((dens>0)&&(NMol>0)){
-			printf("Density %f4.2 nm^-3 \n",dens);
+			printf("Density %4.2f nm^-3 \n",dens);
 			printf("Molecele number: %d \n",NMol);
 		}
 		if(NMol%2==1){
 			NMol=NMol-1;
 			printf("Change molecule numbers to %d \n", NMol);
 		}
-		Vcell=nmol/dens;	//cell volume
+		Vcell=NMol/dens;	//cell volume
 		Hcell=(int)pow(NMol/2,1.0/3.0)+1;
 		dlcell=pow(Vcell,1.0/3.0)/Hcell;
+		//printf("dlcell %f \n\n",dlcell);
 		ce.atype=(int*)malloc(NMol*MAXATOM*sizeof(int));
 		ce.x=(float**)malloc(NMol*sizeof(float*));
 		ce.y=(float**)malloc(NMol*sizeof(float*));
@@ -171,13 +173,16 @@ int main(int argc, char *argv[]){
 			ce.z[i]=(float*)malloc(MAXATOM*sizeof(float));
 		}
 		TempP=(tempcoord*)malloc(Hcell*Hcell*Hcell*sizeof(tempcoord));
+		id=0;
 		for(ii=0;ii<Hcell;ii++){
 			for(jj=0;jj<Hcell;jj++){
 				for(kk=1;kk<Hcell;kk++){
-						TempP[id].x=(ii)*dlcell/Hcell;
-						TempP[id].y=(jj)*dlcell/Hcell;
-						TempP[id].z=(kk)*dlcell/Hcell;
+						//printf("TEST %f \n",dlcell);
+						TempP[id].x=(float)ii*dlcell/Hcell;
+						TempP[id].y=(float)jj*dlcell/Hcell;
+						TempP[id].z=(float)kk*dlcell/Hcell;
 						TempP[id].av=0;
+						//printf("id %d x %f y %f z %f \n",id,TempP[id].x,TempP[id].y,TempP[id].z);
 						id++;
 				}
 			}
@@ -197,9 +202,10 @@ int main(int argc, char *argv[]){
 				moltype[i].atom[j]=(char*)malloc(MAXSTR*sizeof(char));
 			}
 		}
-		tempint=readinitial(argv[5],&moltype[0]);	//read gro file
-		tempint=readinitial(argv[6],&moltype[1]);	//read gro file
+		tempint=readinitial(argv[4],&moltype[0]);	//read gro file
+		tempint=readinitial(argv[5],&moltype[1]);	//read gro file
 		//
+		ce.mnum=NMol;
 		Inserted=0;
 		id=0;
 		while(Inserted<NMol/2){
@@ -210,21 +216,23 @@ int main(int argc, char *argv[]){
 				TempP[testm].av==1;
 				ce.atype[id]=1;
 				for(ii=0;ii<moltype[0].anum;ii++){
+					//printf("n %d x %f y %f z %f \n",testm,TempP[testm].x,TempP[testm].y,TempP[testm].z);
 					ce.x[id][ii]=moltype[0].x[ii]+TempP[testm].x+0.1;
 					ce.y[id][ii]=moltype[0].y[ii]+TempP[testm].y+0.1;
 					ce.z[id][ii]=moltype[0].z[ii]+TempP[testm].z+0.1;
+					printf("id %d ii %d ce.x = %f testm %d \n",id,ii,ce.x[id][ii],testm);
 				}
 				for(ii=0;ii<moltype[1].anum;ii++){
 					ce.x[id+NMol/2][ii]=moltype[1].x[ii]+TempP[testm].x-0.1;
 					ce.y[id+NMol/2][ii]=moltype[1].y[ii]+TempP[testm].y-0.1;
 					ce.z[id+NMol/2][ii]=moltype[1].z[ii]+TempP[testm].z-0.1;
+					printf("id %d ii %d ce.x = %f testm %d \n",id,ii,ce.x[id+NMol/2][ii],testm);
 				}
 				id++;
 				Inserted++;
 				//printf("inserted %d XMol %d \n",Inserted,NMol);
 				//getchar();
 			}
-			printf("id %d %d\n",id,i);
 			}
 		if(argv[argc-1]==NULL){
 			outfile="out.gro";
@@ -232,6 +240,8 @@ int main(int argc, char *argv[]){
 		else{
 			outfile=argv[argc-1];
 		}
+		//printf("ce.x = %f",ce.x[0][0]);
+		printf("\n outfile %s \n", outfile);
 		writegro(outfile,moltype,ce,dlcell,dlcell,dlcell);
 		free(ce.atype);
 		free(ce.x);
@@ -377,7 +387,6 @@ int main(int argc, char *argv[]){
 		}
 		printf("%s %s DONE %s \n",KBLU,outfile,KNRM);
 		writegro(outfile,moltype,ce,dlcell,dlcell,dlcell);
-		
 		free(TempP);
 		free(ce.atype);
 		free(ce.x);
