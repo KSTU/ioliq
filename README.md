@@ -5,7 +5,8 @@ Gromacs initial file for ionic liquids
 
 usage:
 
-cellgen <number density> <generation type: il -- ionic liquid> <>
+cellgen il-ph <number* density> <anion filename> <kation filename>
+cellgen il <number* density> <particle number> <anion filename> <ktion filename>
 
 cellgen mem-dif <mem delta> <mem latice> <sub density> <sub file name> <sub %> [<output filename>]
 
