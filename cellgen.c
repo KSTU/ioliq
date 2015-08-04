@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
 			NMol=NMol-1;
 			printf("Change molecule numbers to %d \n", NMol);
 		}
-		Vcell=NMol/dens;	//cell volume
+		Vcell=NMol/(dens*2.0);	//cell volume //умножаем на 2 т.к. анионы+катионы
 		Hcell=(int)pow(NMol/2,1.0/3.0)+1;
 		dlcell=pow(Vcell,1.0/3.0)/Hcell;
 		//printf("dlcell %f \n\n",dlcell);
@@ -202,6 +202,7 @@ int main(int argc, char *argv[]){
 				moltype[i].atom[j]=(char*)malloc(MAXSTR*sizeof(char));
 			}
 		}
+		//printf("argv 4 %s \n", argv[4]);
 		tempint=readinitial(argv[4],&moltype[0]);	//read gro file
 		tempint=readinitial(argv[5],&moltype[1]);	//read gro file
 		//
@@ -214,19 +215,20 @@ int main(int argc, char *argv[]){
 			if(TempP[testm].av==0){
 				//insert molecules
 				TempP[testm].av==1;
-				ce.atype[id]=1;
 				for(ii=0;ii<moltype[0].anum;ii++){
 					//printf("n %d x %f y %f z %f \n",testm,TempP[testm].x,TempP[testm].y,TempP[testm].z);
-					ce.x[id][ii]=moltype[0].x[ii]+TempP[testm].x+0.1;
-					ce.y[id][ii]=moltype[0].y[ii]+TempP[testm].y+0.1;
-					ce.z[id][ii]=moltype[0].z[ii]+TempP[testm].z+0.1;
-					printf("id %d ii %d ce.x = %f testm %d \n",id,ii,ce.x[id][ii],testm);
+					ce.atype[id]=0;
+					ce.x[id][ii]=moltype[0].x[ii]+TempP[testm].x+0.02;
+					ce.y[id][ii]=moltype[0].y[ii]+TempP[testm].y+0.02;
+					ce.z[id][ii]=moltype[0].z[ii]+TempP[testm].z+0.02;
+					//printf("id %d ii %d ce.x = %f testm %d \n",id,ii,ce.x[id][ii],testm);
 				}
 				for(ii=0;ii<moltype[1].anum;ii++){
-					ce.x[id+NMol/2][ii]=moltype[1].x[ii]+TempP[testm].x-0.1;
-					ce.y[id+NMol/2][ii]=moltype[1].y[ii]+TempP[testm].y-0.1;
-					ce.z[id+NMol/2][ii]=moltype[1].z[ii]+TempP[testm].z-0.1;
-					printf("id %d ii %d ce.x = %f testm %d \n",id,ii,ce.x[id+NMol/2][ii],testm);
+					ce.atype[id+NMol/2]=1;
+					ce.x[id+NMol/2][ii]=moltype[1].x[ii]+TempP[testm].x+0.04;
+					ce.y[id+NMol/2][ii]=moltype[1].y[ii]+TempP[testm].y+0.04;
+					ce.z[id+NMol/2][ii]=moltype[1].z[ii]+TempP[testm].z+0.04;
+					//printf("id %d ii %d ce.x = %f testm %d \n",id,ii,ce.x[id+NMol/2][ii],testm);
 				}
 				id++;
 				Inserted++;
@@ -242,7 +244,7 @@ int main(int argc, char *argv[]){
 		}
 		//printf("ce.x = %f",ce.x[0][0]);
 		printf("\n outfile %s \n", outfile);
-		writegro(outfile,moltype,ce,dlcell,dlcell,dlcell);
+		writegro(outfile,moltype,ce,dlcell*Hcell,dlcell*Hcell,dlcell*Hcell);
 		free(ce.atype);
 		free(ce.x);
 		free(ce.y);
